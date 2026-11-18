@@ -1,0 +1,103 @@
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { read, save, today } from './storage.js';
+
+const key = 'shiftledger-v1';
+const employees = ['James Carter', 'Sophia Bennett', 'Noah Thompson'];
+const seed = employees.map((employee, index) => ({
+  id: 'shift-' + index, employee, date: today(), start: '09:00', end: index === 2 ? '17:30' : '17:00', breakMinutes: 0,
+}));
+const minutes = (time) => {
+  const [hours, rest] = time.split(':').map(Number);
+  return hours * 60 + rest;
+};
+const duration = (shift) => minutes(shift.end) - minutes(shift.start) - Number(shift.breakMinutes);
+const format = (value) => Math.floor(value / 60) + 'h ' + value % 60 + 'm';
+
+function ShiftLedger() {
+  const [entries, setEntries] = useState(() => read(key, seed));
+  const [role, setRole] = useState('employee');
+  const [employee, setEmployee] = useState(employees[0]);
+  const [filter, setFilter] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [notice, setNotice] = useState('');
+  const visible = entries.filter((entry) => role === 'employee'
+    ? entry.employee === employee
+    : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
+    .sort((a, b) => b.date.localeCompare(a.date) || a.start.localeCompare(b.start));
+  const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
+
+  function logShift(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const entry = { ...Object.fromEntries(new FormData(form)), employee, id: crypto.randomUUID() };
+    if (duration(entry) <= 0) {
+      setNotice('End time must be after start time, and the break must be shorter than the shift. Split overnight shifts at midnight.');
+      return;
+    }
+    if (entries.some((item) => item.employee === employee && item.date === entry.date && item.start < entry.end && entry.start < item.end)) {
+      setNotice('This shift overlaps an existing entry.');
+      return;
+    }
+    const next = [...entries, entry];
+    if (!save(key, next)) {
+      setNotice('Changes could not be saved in this browser.');
+      return;
+    }
+    setEntries(next);
+    setNotice('Shift logged.');
+    form.reset();
+  }
+
+  return <>
+    <div className="switcher" aria-label="Demo role">
+      {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
+        onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? 'Employee view' : 'Manager view'}</button>)}
+    </div>
+    {role === 'employee' ? <>
+      <h3>Log a shift</h3>
+      <form onSubmit={logShift}>
+        <label>Employee<select aria-label="Employee" value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
+          {employees.map((name) => <option key={name}>{name}</option>)}
+        </select></label>
+        <label>Date<input type="date" name="date" defaultValue={today()} required /></label>
+        <label>Start time<input type="time" name="start" required /></label>
+        <label>End time<input type="time" name="end" required /></label>
+        <label>Break (minutes)<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue="0" required /></label>
+        <button type="submit">Log shift</button>
+      </form>
+    </> : <>
+      <h3>Team work hours</h3>
+      <div className="filters">
+        <label>Employee<select aria-label="Employee" value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <option value="">All employees</option>{employees.map((name) => <option key={name}>{name}</option>)}
+        </select></label>
+        <label>From<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label>To<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
+        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>Clear filters</button>
+      </div>
+    </>}
+    <p className="notice" role="status">{notice}</p>
+    <div className="summary"><strong>Total work hours</strong><strong>{format(total)}</strong></div>
+    <div className="table-wrap" tabIndex="0" aria-label="Work hours"><table>
+      <thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Break</th><th>Worked</th></tr></thead>
+      <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
+        <td>{entry.employee}</td><td>{entry.date}</td><td>{entry.start}</td><td>{entry.end}</td>
+        <td>{entry.breakMinutes} min</td><td>{format(duration(entry))}</td>
+      </tr>) : <tr><td colSpan="6">No shifts match these filters.</td></tr>}</tbody>
+    </table></div>
+  </>;
+}
+
+export function mount(container) {
+  const root = createRoot(container);
+  root.render(<ShiftLedger />);
+  const observer = new MutationObserver(() => {
+    if (!container.isConnected) {
+      observer.disconnect();
+      root.unmount();
+    }
+  });
+  observer.observe(document.querySelector('#demo'), { childList: true });
+}
