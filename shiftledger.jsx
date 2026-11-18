@@ -22,7 +22,6 @@ function ShiftLedger() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [notice, setNotice] = useState('');
-  const [draft, setDraft] = useState(null);
   const visible = entries.filter((entry) => role === 'employee'
     ? entry.employee === employee
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
@@ -30,26 +29,11 @@ function ShiftLedger() {
   const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
   const hasLoggedShift = entries.some((entry) => entry.employee === employee && !entry.id.startsWith('shift-'));
 
-  const breakdown = employees.map((name) => ({
-    name,
-    minutes: visible.filter((entry) => entry.employee === name).reduce((sum, entry) => sum + duration(entry), 0),
-  })).filter((item) => item.minutes > 0);
-  const longest = Math.max(1, ...breakdown.map((item) => item.minutes));
-
-  function previewShift(form) {
-    const { start, end, breakMinutes } = form.elements;
-    const net = start.value && end.value && breakMinutes.validity.valid
-      ? duration({ start: start.value, end: end.value, breakMinutes: breakMinutes.value })
-      : null;
-    setDraft(net);
-  }
-
   function fillExample(event) {
     const { elements } = event.currentTarget.form;
     elements.start.value = '18:00';
     elements.end.value = '20:00';
     elements.breakMinutes.value = '30';
-    previewShift(event.currentTarget.form);
     elements.start.focus();
   }
 
@@ -73,19 +57,18 @@ function ShiftLedger() {
     setEntries(next);
     setNotice('Shift logged.');
     form.reset();
-    setDraft(null);
   }
 
   return <>
     <div className="switcher" aria-label="Demo role">
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
-        onClick={() => { setRole(mode); setNotice(''); setDraft(null); }}>{mode === 'employee' ? 'Employee view' : 'Manager view'}</button>)}
+        onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? 'Employee view' : 'Manager view'}</button>)}
     </div>
     <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
             <h3>{hasLoggedShift ? 'Log a shift' : 'Log your first shift'}</h3>
       {!hasLoggedShift && <p className="onboarding-note">Enter your start, end, and unpaid break. You can load an example and check it before saving.</p>}
-      <form onSubmit={logShift} onInput={(event) => previewShift(event.currentTarget)}>
+      <form onSubmit={logShift}>
         <label>Employee<select aria-label="Employee" value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
           {employees.map((name) => <option key={name}>{name}</option>)}
         </select></label>
@@ -96,10 +79,6 @@ function ShiftLedger() {
                 <button type="submit">Log shift</button>
         {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>Use example hours</button>}
       </form>
-      <p className="net-preview" aria-live="polite">
-        <span>Net time</span>
-        <strong>{draft === null ? 'Enter shift times' : draft > 0 ? format(draft) : 'Check shift and break'}</strong>
-      </p>
     </> : <>
       <h3>Team work hours</h3>
       <div className="filters">
@@ -114,11 +93,6 @@ function ShiftLedger() {
     </div>
     <p className="notice" role="status">{notice}</p>
     <div className="summary"><strong>Total work hours</strong><strong key={total}>{format(total)}</strong></div>
-    {role === 'manager' && breakdown.length > 0 && <ul className="breakdown" aria-label="Work hours by employee">
-      {breakdown.map(({name, minutes}) => <li key={name}>
-        <span>{name}</span><span className="bar" aria-hidden="true"><i style={{width: (minutes / longest * 100) + '%'}}></i></span><strong>{format(minutes)}</strong>
-      </li>)}
-    </ul>}
     <div className="table-wrap" tabIndex="0" aria-label="Work hours"><table>
       <thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Break</th><th>Worked</th></tr></thead>
       <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
