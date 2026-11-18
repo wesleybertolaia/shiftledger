@@ -2,11 +2,11 @@
 
 An employee time tracking demo. Built with React.
 
-Employees enter their shifts and breaks. Managers review entries, filter by employee or date range, and see total worked time. Shift validation rejects invalid durations and overlapping entries.
+First-time users can load example hours, review them, and save their first shift. Employees enter their shifts and breaks. Managers review entries, filter by employee or date range, and see total worked time. Shift validation rejects invalid durations and overlapping entries.
 
 The demo uses fictional records and stores changes in the browser. Employee and manager views are selectable demo roles.
 
-![ShiftLedger manager view showing employee shifts and total work hours](docs/preview.png)
+![ShiftLedger first-shift form with editable example hours](docs/preview.png)
 
 [Open the live demo](https://wesbertolaia.github.io/shiftledger/)
 

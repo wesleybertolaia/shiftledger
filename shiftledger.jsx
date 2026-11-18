@@ -27,6 +27,15 @@ function ShiftLedger() {
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.start.localeCompare(b.start));
   const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
+  const hasLoggedShift = entries.some((entry) => entry.employee === employee && !entry.id.startsWith('shift-'));
+
+  function fillExample(event) {
+    const { elements } = event.currentTarget.form;
+    elements.start.value = '18:00';
+    elements.end.value = '20:00';
+    elements.breakMinutes.value = '30';
+    elements.start.focus();
+  }
 
   function logShift(event) {
     event.preventDefault();
@@ -57,7 +66,8 @@ function ShiftLedger() {
     </div>
     <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
-      <h3>Log a shift</h3>
+            <h3>{hasLoggedShift ? 'Log a shift' : 'Log your first shift'}</h3>
+      {!hasLoggedShift && <p className="onboarding-note">Enter your start, end, and unpaid break. You can load an example and check it before saving.</p>}
       <form onSubmit={logShift}>
         <label>Employee<select aria-label="Employee" value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
           {employees.map((name) => <option key={name}>{name}</option>)}
@@ -66,7 +76,8 @@ function ShiftLedger() {
         <label>Start time<input type="time" name="start" required /></label>
         <label>End time<input type="time" name="end" required /></label>
         <label>Break (minutes)<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue="0" required /></label>
-        <button type="submit">Log shift</button>
+                <button type="submit">Log shift</button>
+        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>Use example hours</button>}
       </form>
     </> : <>
       <h3>Team work hours</h3>
