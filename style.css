@@ -141,7 +141,7 @@ tbody tr:hover td { background: #f0e8fc; }
   --white: #fffaf2;
 }
 body { background-image: repeating-linear-gradient(0deg, transparent 0 23px, #a778501c 23px 24px); }
-.demo-header { min-height: 190px; padding-block: 1.65rem; background: #362a23; color: #fff8ed; border-radius: .35rem; box-shadow: 5px 5px 0 #ceac81; }
+.demo-header { background: #362a23; color: #fff8ed; border-radius: .35rem; box-shadow: 5px 5px 0 #ceac81; }
 .demo-header .eyebrow { color: #f4c670; }
 .clock { background: radial-gradient(circle, #efbe58 0 62%, transparent 63%), repeating-conic-gradient(#514032 0deg 1.4deg, #fbe4b7 1.4deg 30deg); }
 .hand.sweep { background: #a4472b; }
