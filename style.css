@@ -65,6 +65,20 @@ body {
   background-size: 18px 18px;
 }
 .demo-header { background: #cdb9ff; min-height: 238px; box-shadow: 5px 5px 0 var(--line); }
+.clock {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: 8%;
+  width: clamp(180px, 23vw, 285px);
+  aspect-ratio: 1;
+  rotate: -13deg;
+  translate: 0 -50%;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: radial-gradient(circle, #f7f1ff 0 62%, transparent 63%), repeating-conic-gradient(var(--line) 0deg 1.4deg, #f7f1ff 1.4deg 30deg);
+  box-shadow: 8px 8px 0 var(--line);
+}
 .clock::after { content: ""; position: absolute; inset: calc(50% - 6px); border-radius: 50%; background: var(--line); }
 .hand {
   position: absolute;
