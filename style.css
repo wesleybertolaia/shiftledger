@@ -13,7 +13,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); }
 a { color: inherit; text-underline-offset: .25em; }
-.shell { width: min(1140px, calc(100% - 42px)); margin-inline: auto; }
+.shell { width: calc(100% - clamp(1.25rem, 3vw, 3rem)); margin-inline: auto; }
 .top, footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; }
 .top { border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: .5rem; min-height: 44px; font-weight: 850; text-decoration: none; }
