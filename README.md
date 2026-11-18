@@ -8,7 +8,7 @@ The demo uses fictional records and stores changes in the browser. Employee and 
 
 ![ShiftLedger first-shift form with editable example hours](docs/preview.png)
 
-[Open the live demo](https://wesbertolaia.github.io/shiftledger/)
+[Open the live demo](https://wesleybertolaia.github.io/shiftledger/)
 
 ## Browse the code
 
