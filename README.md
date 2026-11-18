@@ -8,6 +8,8 @@ The demo uses fictional records and stores changes in the browser. Employee and 
 
 ![ShiftLedger manager view showing employee shifts and total work hours](docs/preview.png)
 
+[Open the live demo](https://wesbertolaia.github.io/shiftledger/)
+
 ## Browse the code
 
 - [React application](./shiftledger.jsx)
