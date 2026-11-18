@@ -116,3 +116,4 @@ tbody tr:hover td { background: #f0e8fc; }
   .demo-header { min-height: 186px; }
   .clock { right: -96px; width: 200px; opacity: .43; }
 }
+.onboarding-note { margin-top: .45rem; max-width: 56ch; color: var(--muted); }
