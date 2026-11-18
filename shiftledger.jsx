@@ -55,6 +55,7 @@ function ShiftLedger() {
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
         onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? 'Employee view' : 'Manager view'}</button>)}
     </div>
+    <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
       <h3>Log a shift</h3>
       <form onSubmit={logShift}>
@@ -78,8 +79,9 @@ function ShiftLedger() {
         <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>Clear filters</button>
       </div>
     </>}
+    </div>
     <p className="notice" role="status">{notice}</p>
-    <div className="summary"><strong>Total work hours</strong><strong>{format(total)}</strong></div>
+    <div className="summary"><strong>Total work hours</strong><strong key={total}>{format(total)}</strong></div>
     <div className="table-wrap" tabIndex="0" aria-label="Work hours"><table>
       <thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Break</th><th>Worked</th></tr></thead>
       <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
