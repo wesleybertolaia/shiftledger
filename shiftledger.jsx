@@ -112,41 +112,8 @@ function ShiftLedger() {
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
         onClick={() => { setRole(mode); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
     </div>
-    <div className="mode-panel" key={role}>
-    {role === 'employee' ? <>
-            <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
-      {!hasLoggedShift && <p className="onboarding-note">{t("Enter your start, end, and unpaid break. You can load an example and check it before saving.")}</p>}
-      <form key={correction?.id || entries.length} onSubmit={logShift}>
-        <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); setCorrection(null); setDraft(null); }}>
-          {employees.map((name) => <option key={name}>{name}</option>)}
-        </select></label>
-        <label>{t("Date")}<input type="date" name="date" defaultValue={correction?.date || today()} required /></label>
-        <label>{t("Start time")}<input type="time" name="start" defaultValue={correction?.start} required /></label>
-        <label>{t("End time")}<input type="time" name="end" defaultValue={correction?.end} required /></label>
-        <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue={correction?.breakMinutes ?? 0} required /></label>
-                <button type="submit">{t("Review shift")}</button>
-        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>{t("Use example hours")}</button>}
-      </form>
-      {draft && <section className="shift-review">
-        <h4>{t('Ready to submit?')}</h4>
-        <p>{draft.start}–{draft.end} · {draft.breakMinutes} min · <strong>{format(duration(draft))}</strong></p>
-        <div className="review-actions">
-          <button type="button" onClick={submitShift}>{t('Submit for review')}</button>
-          <button className="secondary" type="button" onClick={() => setDraft(null)}>{t('Edit shift')}</button>
-        </div>
-      </section>}
-    </> : <>
-      <h3>{t("Team work hours")}</h3>
-      <div className="filters">
-        <label>{t("Employee")}<select aria-label={t("Employee")} value={filter} onChange={(event) => setFilter(event.target.value)}>
-          <option value="">{t("All employees")}</option>{employees.map((name) => <option key={name}>{name}</option>)}
-        </select></label>
-        <label>{t("From")}<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
-        <label>{t("To")}<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
-        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>{t("Clear filters")}</button>
-      </div>
-    </>}
-    </div>
+    <div className="timesheet-workspace">
+    <div className="timesheet-records">
     <p className="notice" role="status">{notice}</p>
     {role === 'manager' && <div className="review-summary">
       <div><span>{t('Awaiting review')}</span><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong></div>
@@ -184,6 +151,43 @@ function ShiftLedger() {
         </td>
       </tr>) : <tr><td colSpan="7">{t("No shifts match these filters.")}</td></tr>}</tbody>
     </table></div>
+    </div>
+    <div className="mode-panel" key={role}>
+    {role === 'employee' ? <>
+            <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
+      {!hasLoggedShift && <p className="onboarding-note">{t("Enter your start, end, and unpaid break. You can load an example and check it before saving.")}</p>}
+      <form key={correction?.id || entries.length} onSubmit={logShift}>
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); setCorrection(null); setDraft(null); }}>
+          {employees.map((name) => <option key={name}>{name}</option>)}
+        </select></label>
+        <label>{t("Date")}<input type="date" name="date" defaultValue={correction?.date || today()} required /></label>
+        <label>{t("Start time")}<input type="time" name="start" defaultValue={correction?.start} required /></label>
+        <label>{t("End time")}<input type="time" name="end" defaultValue={correction?.end} required /></label>
+        <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue={correction?.breakMinutes ?? 0} required /></label>
+                <button type="submit">{t("Review shift")}</button>
+        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>{t("Use example hours")}</button>}
+      </form>
+      {draft && <section className="shift-review">
+        <h4>{t('Ready to submit?')}</h4>
+        <p>{draft.start}–{draft.end} · {draft.breakMinutes} min · <strong>{format(duration(draft))}</strong></p>
+        <div className="review-actions">
+          <button type="button" onClick={submitShift}>{t('Submit for review')}</button>
+          <button className="secondary" type="button" onClick={() => setDraft(null)}>{t('Edit shift')}</button>
+        </div>
+      </section>}
+    </> : <>
+      <h3>{t("Team work hours")}</h3>
+      <div className="filters">
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <option value="">{t("All employees")}</option>{employees.map((name) => <option key={name}>{name}</option>)}
+        </select></label>
+        <label>{t("From")}<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label>{t("To")}<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
+        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>{t("Clear filters")}</button>
+      </div>
+    </>}
+    </div>
+    </div>
   </>;
 }
 

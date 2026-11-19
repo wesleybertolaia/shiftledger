@@ -178,3 +178,14 @@ button:disabled { cursor: default; opacity: .55; }
 .shift-hero-total { position: absolute; margin: 0; bottom: .5rem; left: .5rem; padding: .35rem .65rem; border-radius: 6px; color: white; background: #0b233a; }
 .shift-hero-total dt { font-size: .72rem; }
 .shift-hero-total dd { margin: 0; font-size: 1.25rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+
+.timesheet-workspace { display: grid; grid-template-columns: minmax(0,1.8fr) minmax(0,1fr); gap: 1rem; align-items: start; }
+.timesheet-records { min-width: 0; }
+.timesheet-records .summary { margin-top: 0; }
+.timesheet-workspace .mode-panel form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.timesheet-workspace .mode-panel form button { grid-column: 1 / -1; }
+.demo-header { padding-block: .75rem; }
+.shift-hero-visual { min-height: 95px; }
+@media(max-width: 930px) {
+  .timesheet-workspace { grid-template-columns: minmax(0,1fr); }
+}
