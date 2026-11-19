@@ -25,6 +25,8 @@ function ShiftLedger() {
   const [notice, setNotice] = useState('');
   const [draft, setDraft] = useState(null);
   const [correction, setCorrection] = useState(null);
+  const [reviewId, setReviewId] = useState(null);
+  const [reviewReason, setReviewReason] = useState('');
   const visible = entries.filter((entry) => role === 'employee'
     ? entry.employee === employee
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
@@ -68,13 +70,15 @@ function ShiftLedger() {
     setCorrection(null);
   }
 
-  function reviewShift(id, status) {
-    const next = entries.map(entry => entry.id === id && entry.status === 'Pending review' ? { ...entry, status } : entry);
+  function reviewShift(id, status, reason = '') {
+    const next = entries.map(entry => entry.id === id && entry.status === 'Pending review' ? { ...entry, status, reviewReason: reason } : entry);
     if (!save(key, next)) {
       setNotice(t('Changes could not be saved in this browser.'));
       return;
     }
     setEntries(next);
+    setReviewId(null);
+    setReviewReason('');
     setNotice(t('Review saved.'));
   }
 
@@ -119,6 +123,10 @@ function ShiftLedger() {
     </>}
     </div>
     <p className="notice" role="status">{notice}</p>
+    {role === 'manager' && <div className="review-summary">
+      <div><span>{t('Awaiting review')}</span><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong></div>
+      <div><span>{t('Approved hours')}</span><strong>{format(visible.filter(entry => !entry.status || entry.status === 'Approved').reduce((sum, entry) => sum + duration(entry), 0))}</strong></div>
+    </div>}
     <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
     <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
       <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
@@ -126,12 +134,26 @@ function ShiftLedger() {
         <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}</td><td>{entry.end}</td>
         <td>{entry.breakMinutes} min</td><td>{format(duration(entry))}</td>
         <td><span className="shift-status">{t(entry.status || 'Approved')}</span>
+          {entry.reviewReason && <p className="review-reason">{t(entry.reviewReason)}</p>}
           {role === 'employee' && entry.status === 'Needs correction' && <div className="review-actions">
             <button type="button" onClick={() => { setCorrection(entry); setDraft(null); document.querySelector('.mode-panel')?.scrollIntoView({ block: 'nearest' }); }}>{t('Fix entry')}</button>
           </div>}
           {role === 'manager' && entry.status === 'Pending review' && <div className="review-actions">
             <button type="button" onClick={() => reviewShift(entry.id, 'Approved')}>{t('Approve')}</button>
-            <button className="secondary" type="button" onClick={() => reviewShift(entry.id, 'Needs correction')}>{t('Request correction')}</button>
+            <button className="secondary" type="button" onClick={() => { setReviewId(entry.id); setReviewReason(''); }}>{t('Request correction')}</button>
+            {reviewId === entry.id && <form className="reason-form" onSubmit={event => {
+              event.preventDefault();
+              if (reviewReason) reviewShift(entry.id, 'Needs correction', reviewReason);
+            }}>
+              <label>{t('What needs fixing?')}
+                <select required value={reviewReason} onChange={event => setReviewReason(event.target.value)}>
+                  <option value="">{t('Choose a reason')}</option>
+                  {['Check the start and end times', 'Check the unpaid break', 'Check the shift date'].map(reason =>
+                    <option key={reason} value={reason}>{t(reason)}</option>)}
+                </select>
+              </label>
+              <button type="submit">{t('Return shift with reason')}</button>
+            </form>}
           </div>}
         </td>
       </tr>) : <tr><td colSpan="7">{t("No shifts match these filters.")}</td></tr>}</tbody>
