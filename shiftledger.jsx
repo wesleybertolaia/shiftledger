@@ -46,7 +46,6 @@ function ShiftLedger() {
     ? entry.employee === employee
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.start.localeCompare(b.start));
-  const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
   const minutesByDay = new Map();
   for (const entry of visible) {
     minutesByDay.set(entry.date, (minutesByDay.get(entry.date) || 0) + duration(entry));
@@ -157,28 +156,44 @@ function ShiftLedger() {
     <div className="work-toolbar">
       <div className="switcher" aria-label={t("Workspace view")}>
         {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
-          onClick={() => { setRole(mode); setSelectedDay(''); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
+          onClick={() => {
+            if (mode === role) return;
+            setRole(mode);
+            setSelectedDay('');
+            setNotice('');
+            setDraft(null);
+            setCorrection(null);
+            setReviewId(null);
+            setReviewReason('');
+          }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
       </div>
       <p className="help">{t('Changes stay on this device. The workspace starts with sample shifts.')}</p>
     </div>
     <p className="notice" role="status">{notice}</p>
-    <div className="timesheet-workspace">
+    <div className="timesheet-workspace" data-role={role}>
     <div className="timesheet-records" key={role}>
       <div className="record-header">
         <h3>{selectedDay ? displayDate(selectedDay) : t('Work hours')}</h3>
         {selectedDay && <button type="button" className="secondary" onClick={() => setSelectedDay('')}>{t('Show all shifts')}</button>}
-        <div className="record-total"><span>{t('Total work hours')}</span><strong>{format(total)}</strong></div>
       </div>
       {role === 'manager' && <div className="review-summary">
         <div><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong><span>{t('Awaiting review')}</span></div>
         <div><strong>{format(approvedTotal)}</strong><span>{t('Approved hours')}</span></div>
         <button className="secondary" type="button" disabled={!approved.length} onClick={exportApproved}>{t('Export approved hours')}</button>
       </div>}
-    <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
-      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Shift")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
-      <tbody>{displayed.length ? displayed.map((entry) => <tr key={entry.id}>
-        <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}–{entry.end}<small>{t("Break")} · {entry.breakMinutes} min</small></td><td>{format(duration(entry))}</td>
-        <td><span className="shift-status">{t(entry.status || 'Approved')}</span>
+      {role === 'manager' && <div className="filters">
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <option value="">{t("All employees")}</option>{employees.map((name) => <option key={name}>{name}</option>)}
+        </select></label>
+        <label>{t("From")}<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label>{t("To")}<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
+        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>{t("Clear filters")}</button>
+      </div>}
+    <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table role="table">
+      <thead role="rowgroup"><tr role="row"><th scope="col">{t("Employee")}</th><th scope="col">{t("Date")}</th><th scope="col">{t("Shift")}</th><th scope="col">{t("Worked")}</th><th scope="col">{t("Review status")}</th></tr></thead>
+      <tbody role="rowgroup">{displayed.length ? displayed.map((entry) => <tr key={entry.id} role="row">
+        <td role="cell">{entry.employee}</td><td role="cell">{displayDate(entry.date)}</td><td role="cell">{entry.start}–{entry.end}<small>{t("Break")} · {entry.breakMinutes} min</small></td><td role="cell">{format(duration(entry))}</td>
+        <td role="cell"><span className="shift-status">{t(entry.status || 'Approved')}</span>
           {entry.reviewReason && <p className="review-reason">{t(entry.reviewReason)}</p>}
           {role === 'employee' && entry.status === 'Needs correction' && <div className="review-actions">
             <button type="button" onClick={() => { setCorrection(entry); setDraft(null); document.querySelector('.mode-panel')?.scrollIntoView({ block: 'nearest' }); }}>{t('Fix entry')}</button>
@@ -201,11 +216,10 @@ function ShiftLedger() {
             </form>}
           </div>}
         </td>
-      </tr>) : <tr><td colSpan="5">{t("No shifts match these filters.")}</td></tr>}</tbody>
+      </tr>) : <tr className="empty-row" role="row"><td role="cell" colSpan="5">{t("No shifts match these filters.")}</td></tr>}</tbody>
     </table></div>
     </div>
-    <div className="mode-panel" key={role}>
-    {role === 'employee' ? <>
+    {role === 'employee' && <div className="mode-panel">
       <div className="mode-heading">
         <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
         {!hasLoggedShift && <button className="secondary example-button" type="button" form="shift-entry" onClick={fillExample}>{t('Use example hours')}</button>}
@@ -229,18 +243,7 @@ function ShiftLedger() {
           <button className="secondary" type="button" onClick={() => setDraft(null)}>{t('Edit shift')}</button>
         </div>
       </section>}
-    </> : <>
-      <h3>{t("Team work hours")}</h3>
-      <div className="filters">
-        <label>{t("Employee")}<select aria-label={t("Employee")} value={filter} onChange={(event) => setFilter(event.target.value)}>
-          <option value="">{t("All employees")}</option>{employees.map((name) => <option key={name}>{name}</option>)}
-        </select></label>
-        <label>{t("From")}<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
-        <label>{t("To")}<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
-        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>{t("Clear filters")}</button>
-      </div>
-    </>}
-    </div>
+    </div>}
     </div>
   </>;
 }
