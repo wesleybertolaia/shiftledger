@@ -11,7 +11,7 @@
     "Team timesheets": "Controle de jornada da equipe",
     "Log hours, review corrections, and export approved time.": "Registre horas, revise correções e exporte as horas aprovadas.",
 
-    "ShiftLedger | Team timesheets": "ShiftLedger | Registro de jornada",
+    "ShiftLedger | Work hours": "ShiftLedger | Registro de jornada",
     "Changes stay on this device. The workspace starts with sample shifts.": "As alterações ficam neste dispositivo. A área de trabalho vem com turnos de exemplo.",
     "Workspace view": "Visão da área de trabalho",
     "Export approved hours": "Exportar horas aprovadas",
