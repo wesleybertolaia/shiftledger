@@ -32,6 +32,26 @@ function ShiftLedger() {
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.start.localeCompare(b.start));
   const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
+  const approved = visible.filter(entry => !entry.status || entry.status === 'Approved');
+  const approvedTotal = approved.reduce((sum, entry) => sum + duration(entry), 0);
+
+  function exportApproved() {
+    const columns = ['Employee', 'Date', 'Start', 'End', 'Break minutes', 'Approved minutes'];
+    const rows = approved.map(entry => [
+      entry.employee, entry.date, entry.start, entry.end, entry.breakMinutes, duration(entry),
+    ]);
+    const csv = [columns.map(t), ...rows].map(row =>
+      row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',')
+    ).join('\r\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'shiftledger-approved-hours.csv';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setNotice(t('Approved hours exported.'));
+  }
+
   const hasLoggedShift = entries.some((entry) => entry.employee === employee && !entry.id.startsWith('shift-'));
 
   function fillExample(event) {
@@ -83,7 +103,7 @@ function ShiftLedger() {
   }
 
   return <>
-    <div className="switcher" aria-label={t("Demo role")}>
+    <div className="switcher" aria-label={t("Workspace view")}>
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
         onClick={() => { setRole(mode); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
     </div>
@@ -125,8 +145,9 @@ function ShiftLedger() {
     <p className="notice" role="status">{notice}</p>
     {role === 'manager' && <div className="review-summary">
       <div><span>{t('Awaiting review')}</span><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong></div>
-      <div><span>{t('Approved hours')}</span><strong>{format(visible.filter(entry => !entry.status || entry.status === 'Approved').reduce((sum, entry) => sum + duration(entry), 0))}</strong></div>
+      <div><span>{t('Approved hours')}</span><strong>{format(approvedTotal)}</strong></div>
     </div>}
+    {role === 'manager' && <button className="secondary" type="button" disabled={!approved.length} onClick={exportApproved}>{t('Export approved hours')}</button>}
     <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
     <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
       <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>

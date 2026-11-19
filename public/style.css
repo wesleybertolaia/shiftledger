@@ -161,3 +161,5 @@ th,td { border-color: #e2ebf6; }
 .review-summary span,.review-reason { color: var(--muted); font-size: .85rem; }
 .review-reason { margin-top: .35rem; white-space: normal; }
 .reason-form { margin: .35rem 0; }
+
+button:disabled { cursor: default; opacity: .55; }
