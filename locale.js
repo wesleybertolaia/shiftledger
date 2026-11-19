@@ -1,5 +1,14 @@
 (() => {
   const messages = {
+    "Awaiting review": "Aguardando revisão",
+    "Approved hours": "Horas aprovadas",
+    "What needs fixing?": "O que precisa ser corrigido?",
+    "Choose a reason": "Escolha um motivo",
+    "Check the start and end times": "Confira os horários de início e fim",
+    "Check the unpaid break": "Confira o intervalo não remunerado",
+    "Check the shift date": "Confira a data do turno",
+    "Return shift with reason": "Devolver turno com motivo",
+
     "Fix entry": "Corrigir registro",
     "Pending review": "Aguardando revisão",
     "Approved": "Aprovado",
