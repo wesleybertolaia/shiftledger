@@ -7,14 +7,16 @@
   <title>ShiftLedger | React Demo</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./style.css?v=demo-width">
-  <script type="module" src="./app.js"></script>
+  <script src="./locale.js"></script>
+  <script type="module" src="./app.js?v=languages"></script>
+  <link rel="stylesheet" href="./locale.css">
 </head>
 <body>
   <header class="shell top">
     <a class="brand" href="./">ShiftLedger<span>.</span></a>
     <nav aria-label="Main navigation">
       <a href="https://github.com/wesleybertolaia/shiftledger">GitHub</a>
-    </nav>
+    <span data-language-menu></span></nav>
   </header>
   <main class="shell">
     <section id="demo" aria-labelledby="demo-title">

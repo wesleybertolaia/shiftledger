@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { read, save, today } from './storage.js';
 
+const { t, date: displayDate } = window.siteLocale;
 const key = 'shiftledger-v1';
 const employees = ['James Carter', 'Sophia Bennett', 'Noah Thompson'];
 const seed = employees.map((employee, index) => ({
@@ -42,63 +43,63 @@ function ShiftLedger() {
     const form = event.currentTarget;
     const entry = { ...Object.fromEntries(new FormData(form)), employee, id: crypto.randomUUID() };
     if (duration(entry) <= 0) {
-      setNotice('End time must be after start time, and the break must be shorter than the shift. Split overnight shifts at midnight.');
+      setNotice(t('End time must be after start time, and the break must be shorter than the shift. Split overnight shifts at midnight.'));
       return;
     }
     if (entries.some((item) => item.employee === employee && item.date === entry.date && item.start < entry.end && entry.start < item.end)) {
-      setNotice('This shift overlaps an existing entry.');
+      setNotice(t('This shift overlaps an existing entry.'));
       return;
     }
     const next = [...entries, entry];
     if (!save(key, next)) {
-      setNotice('Changes could not be saved in this browser.');
+      setNotice(t('Changes could not be saved in this browser.'));
       return;
     }
     setEntries(next);
-    setNotice('Shift logged.');
+    setNotice(t('Shift logged.'));
     form.reset();
   }
 
   return <>
-    <div className="switcher" aria-label="Demo role">
+    <div className="switcher" aria-label={t("Demo role")}>
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
-        onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? 'Employee view' : 'Manager view'}</button>)}
+        onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
     </div>
     <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
-            <h3>{hasLoggedShift ? 'Log a shift' : 'Log your first shift'}</h3>
-      {!hasLoggedShift && <p className="onboarding-note">Enter your start, end, and unpaid break. You can load an example and check it before saving.</p>}
+            <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
+      {!hasLoggedShift && <p className="onboarding-note">{t("Enter your start, end, and unpaid break. You can load an example and check it before saving.")}</p>}
       <form onSubmit={logShift}>
-        <label>Employee<select aria-label="Employee" value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
           {employees.map((name) => <option key={name}>{name}</option>)}
         </select></label>
-        <label>Date<input type="date" name="date" defaultValue={today()} required /></label>
-        <label>Start time<input type="time" name="start" required /></label>
-        <label>End time<input type="time" name="end" required /></label>
-        <label>Break (minutes)<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue="0" required /></label>
-                <button type="submit">Log shift</button>
-        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>Use example hours</button>}
+        <label>{t("Date")}<input type="date" name="date" defaultValue={today()} required /></label>
+        <label>{t("Start time")}<input type="time" name="start" required /></label>
+        <label>{t("End time")}<input type="time" name="end" required /></label>
+        <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue="0" required /></label>
+                <button type="submit">{t("Log shift")}</button>
+        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>{t("Use example hours")}</button>}
       </form>
     </> : <>
-      <h3>Team work hours</h3>
+      <h3>{t("Team work hours")}</h3>
       <div className="filters">
-        <label>Employee<select aria-label="Employee" value={filter} onChange={(event) => setFilter(event.target.value)}>
-          <option value="">All employees</option>{employees.map((name) => <option key={name}>{name}</option>)}
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <option value="">{t("All employees")}</option>{employees.map((name) => <option key={name}>{name}</option>)}
         </select></label>
-        <label>From<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
-        <label>To<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
-        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>Clear filters</button>
+        <label>{t("From")}<input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label>{t("To")}<input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
+        <button className="secondary" type="button" onClick={() => { setFilter(''); setFrom(''); setTo(''); }}>{t("Clear filters")}</button>
       </div>
     </>}
     </div>
     <p className="notice" role="status">{notice}</p>
-    <div className="summary"><strong>Total work hours</strong><strong key={total}>{format(total)}</strong></div>
-    <div className="table-wrap" tabIndex="0" aria-label="Work hours"><table>
-      <thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Break</th><th>Worked</th></tr></thead>
+    <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
+    <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
+      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th></tr></thead>
       <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
-        <td>{entry.employee}</td><td>{entry.date}</td><td>{entry.start}</td><td>{entry.end}</td>
+        <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}</td><td>{entry.end}</td>
         <td>{entry.breakMinutes} min</td><td>{format(duration(entry))}</td>
-      </tr>) : <tr><td colSpan="6">No shifts match these filters.</td></tr>}</tbody>
+      </tr>) : <tr><td colSpan="6">{t("No shifts match these filters.")}</td></tr>}</tbody>
     </table></div>
   </>;
 }
