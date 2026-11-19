@@ -1,5 +1,7 @@
 (() => {
   const messages = {
+    "Every shift accounted for.": "Cada turno, do registro à aprovação.",
+
     "Team timesheets": "Controle de jornada da equipe",
     "Log hours, review corrections, and export approved time.": "Registre horas, revise correções e exporte as horas aprovadas.",
 
