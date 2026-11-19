@@ -6,9 +6,9 @@
   <meta name="description" content="An employee time tracking demo.">
   <title>ShiftLedger | Team timesheets</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./style.css?v=timesheet-board">
-  <script src="./locale.js?v=timesheet-board"></script>
-  <script type="module" src="./app.js?v=timesheet-board"></script>
+  <link rel="stylesheet" href="./style.css?v=weekly-board">
+  <script src="./locale.js?v=weekly-board"></script>
+  <script type="module" src="./app.js?v=weekly-board"></script>
   <link rel="stylesheet" href="./locale.css">
 </head>
 <body>
@@ -20,15 +20,10 @@
     <section id="demo" aria-labelledby="demo-title">
       <header class="demo-header">
         <div>
-          <p class="signature-line">Every shift accounted for.</p>
           <h1 id="demo-title">Team timesheets</h1><p class="tagline">Log hours, review corrections, and export approved time.</p>
         </div>
-        <div class="shift-hero-visual">
-          <img class="shift-hero-photo" src="./header-visual.jpg" alt="" width="1200" height="800">
-          <div id="shift-hero-total"></div>
-        </div>
+        <div id="shift-hero-total"></div>
       </header>
-      <p class="help">Changes stay on this device. The workspace starts with sample shifts.</p>
       <div class="demo-app"></div>
     </section>
   </main>
