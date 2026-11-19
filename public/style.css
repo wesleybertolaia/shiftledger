@@ -167,3 +167,8 @@ button:disabled { cursor: default; opacity: .55; }
 .demo-header { background: #fff; color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: 1.1rem clamp(1rem, 3vw, 2rem); border-radius: 14px; }
 .demo-header h1 { font-size: clamp(1.75rem, 4vw, 3.25rem); letter-spacing: -.045em; }
 .demo-header .tagline { margin-top: .45rem; color: var(--muted); }
+
+.demo-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(125px, 30%); align-items: center; gap: 1rem; }
+.demo-header .signature-line { color: #245696; font-weight: 700; font-size: .85rem; margin-bottom: .3rem; }
+.shift-hero-photo { display: block; width: 100%; height: clamp(90px, 12vw, 145px); object-fit: cover; border-radius: 10px; }
+@media (max-width: 460px) { .demo-header { grid-template-columns: 1fr; } .shift-hero-photo { height: 84px; } }
