@@ -1,5 +1,19 @@
 (() => {
   const messages = {
+    "Fix entry": "Corrigir registro",
+    "Pending review": "Aguardando revisão",
+    "Approved": "Aprovado",
+    "Needs correction": "Precisa de correção",
+    "Review shift": "Revisar turno",
+    "Ready to submit?": "Pronto para enviar?",
+    "Submit for review": "Enviar para revisão",
+    "Edit shift": "Editar turno",
+    "Shift submitted for review.": "Turno enviado para revisão.",
+    "Review saved.": "Revisão salva.",
+    "Review status": "Status da revisão",
+    "Approve": "Aprovar",
+    "Request correction": "Solicitar correção",
+
     "Language": "Idioma",
     "Portfolio": "Portfólio",
     "Main navigation": "Navegação principal",

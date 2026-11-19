@@ -23,6 +23,8 @@ function ShiftLedger() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [notice, setNotice] = useState('');
+  const [draft, setDraft] = useState(null);
+  const [correction, setCorrection] = useState(null);
   const visible = entries.filter((entry) => role === 'employee'
     ? entry.employee === employee
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
@@ -41,45 +43,69 @@ function ShiftLedger() {
   function logShift(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    const entry = { ...Object.fromEntries(new FormData(form)), employee, id: crypto.randomUUID() };
+    const entry = { ...Object.fromEntries(new FormData(form)), employee, id: correction?.id || crypto.randomUUID() };
     if (duration(entry) <= 0) {
       setNotice(t('End time must be after start time, and the break must be shorter than the shift. Split overnight shifts at midnight.'));
       return;
     }
-    if (entries.some((item) => item.employee === employee && item.date === entry.date && item.start < entry.end && entry.start < item.end)) {
+    if (entries.some((item) => item.id !== entry.id && item.employee === employee && item.date === entry.date && item.start < entry.end && entry.start < item.end)) {
       setNotice(t('This shift overlaps an existing entry.'));
       return;
     }
-    const next = [...entries, entry];
+    setDraft({ ...entry, status: 'Pending review' });
+    setNotice('');
+  }
+
+  function submitShift() {
+    const next = correction ? entries.map(entry => entry.id === draft.id ? draft : entry) : [...entries, draft];
     if (!save(key, next)) {
       setNotice(t('Changes could not be saved in this browser.'));
       return;
     }
     setEntries(next);
-    setNotice(t('Shift logged.'));
-    form.reset();
+    setNotice(t('Shift submitted for review.'));
+    setDraft(null);
+    setCorrection(null);
+  }
+
+  function reviewShift(id, status) {
+    const next = entries.map(entry => entry.id === id && entry.status === 'Pending review' ? { ...entry, status } : entry);
+    if (!save(key, next)) {
+      setNotice(t('Changes could not be saved in this browser.'));
+      return;
+    }
+    setEntries(next);
+    setNotice(t('Review saved.'));
   }
 
   return <>
     <div className="switcher" aria-label={t("Demo role")}>
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
-        onClick={() => { setRole(mode); setNotice(''); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
+        onClick={() => { setRole(mode); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
     </div>
     <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
             <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
       {!hasLoggedShift && <p className="onboarding-note">{t("Enter your start, end, and unpaid break. You can load an example and check it before saving.")}</p>}
-      <form onSubmit={logShift}>
-        <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); }}>
+      <form key={correction?.id || entries.length} onSubmit={logShift}>
+        <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); setCorrection(null); setDraft(null); }}>
           {employees.map((name) => <option key={name}>{name}</option>)}
         </select></label>
-        <label>{t("Date")}<input type="date" name="date" defaultValue={today()} required /></label>
-        <label>{t("Start time")}<input type="time" name="start" required /></label>
-        <label>{t("End time")}<input type="time" name="end" required /></label>
-        <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue="0" required /></label>
-                <button type="submit">{t("Log shift")}</button>
+        <label>{t("Date")}<input type="date" name="date" defaultValue={correction?.date || today()} required /></label>
+        <label>{t("Start time")}<input type="time" name="start" defaultValue={correction?.start} required /></label>
+        <label>{t("End time")}<input type="time" name="end" defaultValue={correction?.end} required /></label>
+        <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue={correction?.breakMinutes ?? 0} required /></label>
+                <button type="submit">{t("Review shift")}</button>
         {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>{t("Use example hours")}</button>}
       </form>
+      {draft && <section className="shift-review">
+        <h4>{t('Ready to submit?')}</h4>
+        <p>{draft.start}–{draft.end} · {draft.breakMinutes} min · <strong>{format(duration(draft))}</strong></p>
+        <div className="review-actions">
+          <button type="button" onClick={submitShift}>{t('Submit for review')}</button>
+          <button className="secondary" type="button" onClick={() => setDraft(null)}>{t('Edit shift')}</button>
+        </div>
+      </section>}
     </> : <>
       <h3>{t("Team work hours")}</h3>
       <div className="filters">
@@ -95,11 +121,20 @@ function ShiftLedger() {
     <p className="notice" role="status">{notice}</p>
     <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
     <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
-      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th></tr></thead>
+      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
       <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
         <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}</td><td>{entry.end}</td>
         <td>{entry.breakMinutes} min</td><td>{format(duration(entry))}</td>
-      </tr>) : <tr><td colSpan="6">{t("No shifts match these filters.")}</td></tr>}</tbody>
+        <td><span className="shift-status">{t(entry.status || 'Approved')}</span>
+          {role === 'employee' && entry.status === 'Needs correction' && <div className="review-actions">
+            <button type="button" onClick={() => { setCorrection(entry); setDraft(null); document.querySelector('.mode-panel')?.scrollIntoView({ block: 'nearest' }); }}>{t('Fix entry')}</button>
+          </div>}
+          {role === 'manager' && entry.status === 'Pending review' && <div className="review-actions">
+            <button type="button" onClick={() => reviewShift(entry.id, 'Approved')}>{t('Approve')}</button>
+            <button className="secondary" type="button" onClick={() => reviewShift(entry.id, 'Needs correction')}>{t('Request correction')}</button>
+          </div>}
+        </td>
+      </tr>) : <tr><td colSpan="7">{t("No shifts match these filters.")}</td></tr>}</tbody>
     </table></div>
   </>;
 }
