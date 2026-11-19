@@ -1,5 +1,13 @@
 (() => {
   const messages = {
+    "ShiftLedger | Team timesheets": "ShiftLedger | Registro de jornada",
+    "Changes stay on this device. The workspace starts with sample shifts.": "As alterações ficam neste dispositivo. A área de trabalho vem com turnos de exemplo.",
+    "Workspace view": "Visão da área de trabalho",
+    "Export approved hours": "Exportar horas aprovadas",
+    "Approved hours exported.": "Horas aprovadas exportadas.",
+    "Break minutes": "Minutos de intervalo",
+    "Approved minutes": "Minutos aprovados",
+
     "Awaiting review": "Aguardando revisão",
     "Approved hours": "Horas aprovadas",
     "What needs fixing?": "O que precisa ser corrigido?",
