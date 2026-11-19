@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { read, save, today } from './storage.js';
 
 const { t, date: displayDate } = window.siteLocale;
@@ -102,7 +103,11 @@ function ShiftLedger() {
     setNotice(t('Review saved.'));
   }
 
+  const headerTotal = document.querySelector('#shift-hero-total');
   return <>
+    {headerTotal && createPortal(<dl className="shift-hero-total">
+      <dt>{t('Approved hours')}</dt><dd>{format(approvedTotal)}</dd>
+    </dl>, headerTotal)}
     <div className="switcher" aria-label={t("Workspace view")}>
       {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
         onClick={() => { setRole(mode); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
