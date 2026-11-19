@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { read, save, today } from './storage.js';
 
-const { t, date: displayDate } = window.siteLocale;
+const { t, date: displayDate, language } = window.siteLocale;
 const key = 'shiftledger-v1';
 const employees = ['James Carter', 'Sophia Bennett', 'Noah Thompson'];
 const seed = employees.map((employee, index) => ({
@@ -15,6 +15,18 @@ const minutes = (time) => {
 };
 const duration = (shift) => minutes(shift.end) - minutes(shift.start) - Number(shift.breakMinutes);
 const format = (value) => Math.floor(value / 60) + 'h ' + value % 60 + 'm';
+
+function addDays(iso, count) {
+  const day = new Date(iso);
+  day.setUTCDate(day.getUTCDate() + count);
+  return day.toISOString().slice(0, 10);
+}
+
+function weekStart(iso) {
+  return addDays(iso, -((new Date(iso).getUTCDay() + 6) % 7));
+}
+
+const shortDay = new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' });
 
 function ShiftLedger() {
   const [entries, setEntries] = useState(() => read(key, seed));
@@ -28,6 +40,8 @@ function ShiftLedger() {
   const [correction, setCorrection] = useState(null);
   const [reviewId, setReviewId] = useState(null);
   const [reviewReason, setReviewReason] = useState('');
+  const [week, setWeek] = useState(() => weekStart(today()));
+  const [selectedDay, setSelectedDay] = useState('');
   const visible = entries.filter((entry) => role === 'employee'
     ? entry.employee === employee
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
@@ -37,7 +51,16 @@ function ShiftLedger() {
   for (const entry of visible) {
     minutesByDay.set(entry.date, (minutesByDay.get(entry.date) || 0) + duration(entry));
   }
-  const activity = [...minutesByDay].slice(0, 7).reverse();
+  const activity = Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(week, index);
+    return [date, minutesByDay.get(date) || 0];
+  });
+  const weeklyTotal = activity.reduce((sum, [, worked]) => sum + worked, 0);
+  const displayed = selectedDay ? visible.filter(entry => entry.date === selectedDay) : visible;
+  function changeWeek(offset) {
+    setWeek(addDays(week, offset));
+    setSelectedDay('');
+  }
   const activityMax = Math.max(1, ...activity.map(([, minutes]) => minutes));
   const approved = visible.filter(entry => !entry.status || entry.status === 'Approved');
   const approvedTotal = approved.reduce((sum, entry) => sum + duration(entry), 0);
@@ -92,6 +115,8 @@ function ShiftLedger() {
       return;
     }
     setEntries(next);
+    setWeek(weekStart(draft.date));
+    setSelectedDay(draft.date);
     setNotice(t('Shift submitted for review.'));
     setDraft(null);
     setCorrection(null);
@@ -111,35 +136,48 @@ function ShiftLedger() {
 
   const headerTotal = document.querySelector('#shift-hero-total');
   return <>
-    {headerTotal && createPortal(<dl className="shift-hero-total">
-      <dt>{t('Approved hours')}</dt><dd>{format(approvedTotal)}</dd>
-    </dl>, headerTotal)}
-    <div className="switcher" aria-label={t("Workspace view")}>
-      {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
-        onClick={() => { setRole(mode); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
+    {headerTotal && createPortal(<section className="hours-activity" aria-labelledby="activity-title">
+      <div className="week-header">
+        <div><h3 id="activity-title">{t('Hours by day')}</h3><p>{displayDate(week)} – {displayDate(addDays(week, 6))}</p></div>
+        <div className="week-nav">
+          <button type="button" aria-label={t('Previous week')} onClick={() => changeWeek(-7)}>‹</button>
+          <button type="button" aria-label={t('Next week')} onClick={() => changeWeek(7)}>›</button>
+        </div>
+      </div>
+      <div className="week-days" key={week}>
+        {activity.map(([day, worked], index) => <button type="button" key={day} className="week-day"
+          aria-label={displayDate(day) + ' · ' + format(worked)} aria-pressed={selectedDay === day}
+          onClick={() => setSelectedDay(selectedDay === day ? '' : day)}>
+          <span className="day-track" aria-hidden="true"><span style={{ '--worked': worked / activityMax, '--day-order': index }} /></span>
+          <span>{shortDay.format(new Date(day))}</span><strong>{worked ? format(worked) : '—'}</strong>
+        </button>)}
+      </div>
+      <p className="week-total"><span>{t('Week total')}</span><strong key={weeklyTotal}>{format(weeklyTotal)}</strong></p>
+    </section>, headerTotal)}
+    <div className="work-toolbar">
+      <div className="switcher" aria-label={t("Workspace view")}>
+        {['employee', 'manager'].map((mode) => <button key={mode} type="button" aria-pressed={role === mode}
+          onClick={() => { setRole(mode); setSelectedDay(''); setNotice(''); setDraft(null); setCorrection(null); }}>{mode === 'employee' ? t('Employee view') : t('Manager view')}</button>)}
+      </div>
+      <p className="help">{t('Changes stay on this device. The workspace starts with sample shifts.')}</p>
     </div>
-    <div className="timesheet-workspace">
-    <div className="timesheet-records">
     <p className="notice" role="status">{notice}</p>
-    {role === 'manager' && <div className="review-summary">
-      <div><span>{t('Awaiting review')}</span><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong></div>
-      <div><span>{t('Approved hours')}</span><strong>{format(approvedTotal)}</strong></div>
-    </div>}
-    {role === 'manager' && <button className="secondary" type="button" disabled={!approved.length} onClick={exportApproved}>{t('Export approved hours')}</button>}
-    <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
-    {activity.length > 0 && <section className="hours-activity" aria-labelledby="activity-title">
-      <h3 id="activity-title">{t('Hours by day')}</h3>
-      <ul>{activity.map(([day, minutes]) => <li key={day}>
-        <time dateTime={day}>{displayDate(day)}</time>
-        <span className="activity-track" aria-hidden="true"><i style={{ width: `${minutes / activityMax * 100}%` }} /></span>
-        <strong>{format(minutes)}</strong>
-      </li>)}</ul>
-    </section>}
+    <div className="timesheet-workspace">
+    <div className="timesheet-records" key={role}>
+      <div className="record-header">
+        <h3>{selectedDay ? displayDate(selectedDay) : t('Work hours')}</h3>
+        {selectedDay && <button type="button" className="secondary" onClick={() => setSelectedDay('')}>{t('Show all shifts')}</button>}
+        <div className="record-total"><span>{t('Total work hours')}</span><strong>{format(total)}</strong></div>
+      </div>
+      {role === 'manager' && <div className="review-summary">
+        <div><strong>{visible.filter(entry => entry.status === 'Pending review').length}</strong><span>{t('Awaiting review')}</span></div>
+        <div><strong>{format(approvedTotal)}</strong><span>{t('Approved hours')}</span></div>
+        <button className="secondary" type="button" disabled={!approved.length} onClick={exportApproved}>{t('Export approved hours')}</button>
+      </div>}
     <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
-      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
-      <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
-        <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}</td><td>{entry.end}</td>
-        <td>{entry.breakMinutes} min</td><td>{format(duration(entry))}</td>
+      <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Shift")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
+      <tbody>{displayed.length ? displayed.map((entry) => <tr key={entry.id}>
+        <td>{entry.employee}</td><td>{displayDate(entry.date)}</td><td>{entry.start}–{entry.end}<small>{t("Break")} · {entry.breakMinutes} min</small></td><td>{format(duration(entry))}</td>
         <td><span className="shift-status">{t(entry.status || 'Approved')}</span>
           {entry.reviewReason && <p className="review-reason">{t(entry.reviewReason)}</p>}
           {role === 'employee' && entry.status === 'Needs correction' && <div className="review-actions">
@@ -163,14 +201,17 @@ function ShiftLedger() {
             </form>}
           </div>}
         </td>
-      </tr>) : <tr><td colSpan="7">{t("No shifts match these filters.")}</td></tr>}</tbody>
+      </tr>) : <tr><td colSpan="5">{t("No shifts match these filters.")}</td></tr>}</tbody>
     </table></div>
     </div>
     <div className="mode-panel" key={role}>
     {role === 'employee' ? <>
-            <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
+      <div className="mode-heading">
+        <h3>{hasLoggedShift ? t('Log a shift') : t('Log your first shift')}</h3>
+        {!hasLoggedShift && <button className="secondary example-button" type="button" form="shift-entry" onClick={fillExample}>{t('Use example hours')}</button>}
+      </div>
       {!hasLoggedShift && <p className="onboarding-note">{t("Enter your start, end, and unpaid break. You can load an example and check it before saving.")}</p>}
-      <form key={correction?.id || entries.length} onSubmit={logShift}>
+      <form id="shift-entry" key={correction?.id || entries.length} onSubmit={logShift}>
         <label>{t("Employee")}<select aria-label={t("Employee")} value={employee} onChange={(event) => { setEmployee(event.target.value); setNotice(''); setCorrection(null); setDraft(null); }}>
           {employees.map((name) => <option key={name}>{name}</option>)}
         </select></label>
@@ -179,7 +220,6 @@ function ShiftLedger() {
         <label>{t("End time")}<input type="time" name="end" defaultValue={correction?.end} required /></label>
         <label>{t("Break (minutes)")}<input type="number" name="breakMinutes" min="0" max="1439" step="1" defaultValue={correction?.breakMinutes ?? 0} required /></label>
                 <button type="submit">{t("Review shift")}</button>
-        {!hasLoggedShift && <button className="secondary" type="button" onClick={fillExample}>{t("Use example hours")}</button>}
       </form>
       {draft && <section className="shift-review">
         <h4>{t('Ready to submit?')}</h4>

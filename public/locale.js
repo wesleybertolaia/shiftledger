@@ -1,5 +1,10 @@
 (() => {
   const messages = {
+    "Previous week": "Semana anterior",
+    "Next week": "Próxima semana",
+    "Week total": "Total da semana",
+    "Show all shifts": "Ver todos os turnos",
+    "Shift": "Turno",
     "Hours by day": "Horas por dia",
     "Every shift accounted for.": "Cada turno, do registro à aprovação.",
 
