@@ -189,3 +189,18 @@ button:disabled { cursor: default; opacity: .55; }
 @media(max-width: 930px) {
   .timesheet-workspace { grid-template-columns: minmax(0,1fr); }
 }
+
+/* A reporting surface with a compact daily activity view. */
+body { background: #eef0f8; }
+.demo-header { border: 0; border-radius: 18px; padding: .9rem 1.15rem; background: #28294f; color: #fff; }
+.demo-header .signature-line { color: #c7c8ff; }
+.demo-header .tagline { color: #e4e5ff; }
+.shift-hero-visual { max-height: 112px; }
+.switcher { width: fit-content; padding: .25rem; background: #dedff0; border-radius: 12px; }
+.switcher button[aria-pressed=true] { background: #454886; }
+.hours-activity { margin: .7rem 0; padding: .85rem 1rem; border: 1px solid #dadcf0; border-radius: 14px; background: #fff; }
+.hours-activity h3 { font-size: 1rem; margin: 0 0 .5rem; }
+.hours-activity ul { display: grid; gap: .45rem; list-style: none; margin: 0; padding: 0; }
+.hours-activity li { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: .6rem; font-size: .8rem; }
+.activity-track { display: block; height: .6rem; border-radius: 6px; background: #eaeaFA; }
+.activity-track i { display: block; height: 100%; border-radius: inherit; background: #6265ab; }

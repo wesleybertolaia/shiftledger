@@ -33,6 +33,12 @@ function ShiftLedger() {
     : (!filter || entry.employee === filter) && (!from || entry.date >= from) && (!to || entry.date <= to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.start.localeCompare(b.start));
   const total = visible.reduce((sum, entry) => sum + duration(entry), 0);
+  const minutesByDay = new Map();
+  for (const entry of visible) {
+    minutesByDay.set(entry.date, (minutesByDay.get(entry.date) || 0) + duration(entry));
+  }
+  const activity = [...minutesByDay].slice(0, 7).reverse();
+  const activityMax = Math.max(1, ...activity.map(([, minutes]) => minutes));
   const approved = visible.filter(entry => !entry.status || entry.status === 'Approved');
   const approvedTotal = approved.reduce((sum, entry) => sum + duration(entry), 0);
 
@@ -121,6 +127,14 @@ function ShiftLedger() {
     </div>}
     {role === 'manager' && <button className="secondary" type="button" disabled={!approved.length} onClick={exportApproved}>{t('Export approved hours')}</button>}
     <div className="summary"><strong>{t("Total work hours")}</strong><strong key={total}>{format(total)}</strong></div>
+    {activity.length > 0 && <section className="hours-activity" aria-labelledby="activity-title">
+      <h3 id="activity-title">{t('Hours by day')}</h3>
+      <ul>{activity.map(([day, minutes]) => <li key={day}>
+        <time dateTime={day}>{displayDate(day)}</time>
+        <span className="activity-track" aria-hidden="true"><i style={{ width: `${minutes / activityMax * 100}%` }} /></span>
+        <strong>{format(minutes)}</strong>
+      </li>)}</ul>
+    </section>}
     <div className="table-wrap" tabIndex="0" aria-label={t("Work hours")}><table>
       <thead><tr><th>{t("Employee")}</th><th>{t("Date")}</th><th>{t("Start")}</th><th>{t("End")}</th><th>{t("Break")}</th><th>{t("Worked")}</th><th>{t("Review status")}</th></tr></thead>
       <tbody>{visible.length ? visible.map((entry) => <tr key={entry.id}>
